@@ -29,16 +29,7 @@ train <- within(train, {
   CLASS[PURCHASE==0 & TREATMENT==0]='D'
 })
 
-valid <- within(valid, {
-  CLASS=NA
-  CLASS[PURCHASE==1 & TREATMENT==1]='A'
-  CLASS[PURCHASE==0 & TREATMENT==1]='B'
-  CLASS[PURCHASE==1 & TREATMENT==0]='C'
-  CLASS[PURCHASE==0 & TREATMENT==0]='D'
-})
-
 train$CLASS <- as.factor(train$CLASS)
-valid$CLASS <- as.factor(valid$CLASS)
 
 ### Missing value dummies
 train <- CreateMissingDummies(train)
@@ -55,9 +46,9 @@ train <- train[,c(DepVar, TrtVar, c("CLASS", SubsetNIV))]
 
 
 ### Deal with missing values
-train <- ImputeMeans(train)
 valid <- CrossImputeMeans(valid, train)
 test <- CrossImputeMeans(test, train)
+train <- ImputeMeans(train)
 
 ### Variable clustering
 tree <- hclustvar(train[,SubsetNIV])
