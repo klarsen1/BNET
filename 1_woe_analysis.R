@@ -1,7 +1,7 @@
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET/Data/"
-CodeLocation <- "/Users/kimlarsen/Google Drive/BNET/"
+DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
+CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
 source(paste0(CodeLocation, "HelperFunctions.R"))
 source(paste0(CodeLocation, "Information.R"))
 

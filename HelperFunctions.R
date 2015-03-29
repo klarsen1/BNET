@@ -54,15 +54,17 @@ CreateMissingDummies <- function(data){
   return(data)
 }
 
-ImputeMeans <- function(data){  
+ImputeMeans <- function(data, skip){  
+  skipdf <- data[,names(data) %in% skip]
+  data <- data[,!(names(data) %in% skip)]  
   data[,sapply(data, is.numeric)] <- numcolwise(function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))(data)
-  return(data)  
+  return(cbind.data.frame(data, skipdf))    
 }
 
-CrossImputeMeans <- function(data1, data2){
+CrossImputeMeans <- function(data1, data2, skip){
   # Use data1 to get means. Impute missing values in data2
   Means <- numcolwise(function(x) mean(x, na.rm=TRUE))(data2)
-  #names <- names(data1[,sapply(data1, is.numeric)])
+  Means <- Means[,!(names(Means) %in% skip)]
   names <- names(Means)
   for (i in 1:length(names)){
      if (names[i] %in% names(data1)){
@@ -72,18 +74,24 @@ CrossImputeMeans <- function(data1, data2){
   return(data1)  
 }
 
-Standardize <- function(data){
+Standardize <- function(data, skip){
+  skipdf <- data[,names(data) %in% skip]
+  data <- data[,!(names(data) %in% skip)]
   data[,sapply(data, is.numeric)] <- numcolwise(function(x) (x-mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE))(data)
-  return(data)    
+  return(cbind.data.frame(data, skipdf))    
 }
 
-cap <- function(data, p=0.99){
+cap <- function(data, skip, p=0.99){
+  skipdf <- data[,names(data) %in% skip]
+  data <- data[,!(names(data) %in% skip)]  
   data[,sapply(data, is.numeric)] <- numcolwise(function(x) ifelse(x>quantile(x, p=0.99, na.rm=TRUE), quantile(x, p=0.995, na.rm=TRUE), x))(data)  
+  return(cbind.data.frame(data, skipdf))    
 }
 
-CrossCap <- function(data1, data2, p=0.99){
+CrossCap <- function(data1, data2, skip, p=0.99){
   # Use data1 to get means. Impute missing values in data2
-  q <- numcolwise(function(x) quantile(x, prob=0.99, na.rm=TRUE))(data2)
+  q <- numcolwise(function(x) quantile(x, prob=p, na.rm=TRUE))(data2)
+  q <- q[,!(names(q) %in% skip)]
   names <- names(q)
   for (i in 1:length(names)){
     if (names[i] %in% names(data1)){
@@ -94,10 +102,12 @@ CrossCap <- function(data1, data2, p=0.99){
   return(data1)  
 }
 
-CrossStandardize <- function(data1, data2){
+CrossStandardize <- function(data1, data2, skip){
   # Use data1 to get means. Impute missing values in data2
   Means <- numcolwise(function(x) mean(x, na.rm=TRUE))(data2)
   SDs <- numcolwise(function(x) sd(x, na.rm=TRUE))(data2)  
+  Means <- Means[,!(names(Means) %in% skip)]
+  SDs <- SDs[,!(names(SDs) %in% skip)]  
   names <- names(Means)
   for (i in 1:length(names)){
     if (names[i] %in% names(data1)){
@@ -116,7 +126,7 @@ NetLiftCurve <- function(data, y, trt, by=NULL){
   data$t_0 <- ifelse(data[,trt]==0, 1, 0)
   if (is.null(by)){
      data$Group <- "ALL"
-     by <- "ALL"
+     by <- "Group"
   } else{
     data$Group <- data[[by]]    
   }
@@ -126,7 +136,7 @@ NetLiftCurve <- function(data, y, trt, by=NULL){
                                      sum(y_1_t)/sum(t_1), 
                                      sum(y_1_c)/sum(t_0), 
                                      sum(y_1_t)/sum(t_1) - sum(y_1_c)/sum(t_0)), 
-                                     by=by])
+                                     by=Group])
   names(output) <- c(by, "N", "TreatmentRate", "ControlRate", "NetLift")
   return(output)  
 }

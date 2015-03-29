@@ -1,7 +1,9 @@
+rm(list=ls())
+
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET/Data/"
-CodeLocation <- "/Users/kimlarsen/Google Drive/BNET/"
+DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
+CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
 source(paste0(CodeLocation, "HelperFunctions.R"))
 source(paste0(CodeLocation, "Information.R"))
 source(paste0(CodeLocation, "auc.R"))
@@ -34,13 +36,10 @@ Variables <- as.character(readRDS(file=paste0(DataLocation, "/ClustersNIV.rda"))
 train <- CreateMissingDummies(train)
 
 ### Deal with missing values
-train <- ImputeMeans(train)
+train <- ImputeMeans(train, c(ID, TrtVar, DepVar))
 
 ### Standardize the data for clustering
-d <- train[,c(TrtVar, DepVar)]
-train[,TrtVar] <- NULL
-train[,DepVar] <- NULL
-train <- cbind.data.frame(Standardize(train), d)
+train <- Standardize(train, c(ID, TrtVar, DepVar))
 
 ### Score the traning dataset with the KNN
 knn <- kknn(as.formula(paste0("CLASS ~ ", paste(Variables, collapse="+"))), 
@@ -73,21 +72,19 @@ table(scored$D_SWING)
 ###################### GAM approximation
 ### Re-read the data to get rid of standardization
 train <- readRDS(TrainingData)
-train <- cap(train)
-test <- CrossCap(test, train)
+test <- CrossCap(test, train, c(ID, TrtVar, DepVar))
+train <- cap(train, c(ID, TrtVar, DepVar))
 
 ### Missing value dummies
 train <- CreateMissingDummies(train)
 test <- CreateMissingDummies(test)
 
 ### Deal with missing values
-test <- CrossImputeMeans(test, train)
+test <- CrossImputeMeans(test, train, c(ID, TrtVar, DepVar))
 
 train <- cbind.data.frame(scored$D_SWING, train[,Variables])
 names(train)[1] <- "D_SWING"
 train <- subset(train, !is.na(D_SWING))
-
-Information(train, train, "D_SWING", 10)$Summary
 
 additive.model <- gam::gam(CreateGAMFormula(train, "D_SWING", 0.3), 
                             na.action=na.gam.replace, 

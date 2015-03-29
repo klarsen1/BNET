@@ -1,7 +1,9 @@
+rm(list=ls())
+
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET/Data/"
-CodeLocation <- "/Users/kimlarsen/Google Drive/BNET/"
+DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
+CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
 source(paste0(CodeLocation, "HelperFunctions.R"))
 source(paste0(CodeLocation, "Information.R"))
 source(paste0(CodeLocation, "auc.R"))
@@ -21,6 +23,19 @@ test <- readRDS(TestData)
 
 train$REGION <- NULL
 
+### Missing value dummies
+train <- CreateMissingDummies(train)
+valid <- CreateMissingDummies(valid)
+test <- CreateMissingDummies(test)
+
+### Run the WOE analysis and remove weak predictors
+NIV <- Information(train, valid, DepVar, 10, TrtVar)
+NIV$Summary
+NIV$Tables$N_OPEN_REV_ACTS
+SubsetNIV <- subset(NIV$Summary, AdjNIV>=0.02)$Variable
+train <- train[,c(DepVar, TrtVar, SubsetNIV)]
+
+### Create a class variable for KNN
 train <- within(train, {
   CLASS=NA
   CLASS[PURCHASE==1 & TREATMENT==1]='A'
@@ -31,29 +46,18 @@ train <- within(train, {
 
 train$CLASS <- as.factor(train$CLASS)
 
-### Missing value dummies
-train <- CreateMissingDummies(train)
-valid <- CreateMissingDummies(valid)
-test <- CreateMissingDummies(test)
-
-
-### Run the WOE analysis and remove weak predictors
-NIV <- Information(train, valid, DepVar, 10, TrtVar)
-NIV$Summary
-NIV$Tables$N_OPEN_REV_ACTS
-SubsetNIV <- subset(NIV$Summary, AdjNIV>=0.02)$Variable
-train <- train[,c(DepVar, TrtVar, c("CLASS", SubsetNIV))]
-
+### Cap outliers
+train <- cap(train, c(DepVar, TrtVar, ID))
+valid <- CrossCap(valid, train, c(DepVar, TrtVar, ID))
+test <- CrossCap(test, train, c(DepVar, TrtVar, ID))
 
 ### Deal with missing values
-valid <- CrossImputeMeans(valid, train)
-test <- CrossImputeMeans(test, train)
-train <- ImputeMeans(train)
+valid <- CrossImputeMeans(valid, train, c(DepVar, TrtVar, ID))
+test <- CrossImputeMeans(test, train, c(DepVar, TrtVar, ID))
+train <- ImputeMeans(train, c(DepVar, TrtVar, ID))
 
 ### Variable clustering
 tree <- hclustvar(train[,SubsetNIV])
-#stab <- stability(tree, B=40)
-#plot(stab)
 nclusters <- length(tree[tree$height<0.7])
 part_init<-cutreevar(tree,nclusters)$cluster
 kmeans<-kmeansvar(X.quanti=train[,SubsetNIV],init=part_init)
@@ -68,29 +72,18 @@ View(ClustersNIV)
 saveRDS(subset(ClustersNIV, Rank==1), paste0(DataLocation, "/ClustersNIV.rda"))
 
 ### Standardize the data for clustering
+valid <- CrossStandardize(valid, train, c(DepVar, TrtVar, ID))
+test <- CrossStandardize(test, train, c(DepVar, TrtVar, ID))
+train <- Standardize(train, c(DepVar, TrtVar, ID))
+
 train[,DepVar] <- NULL
 train[,TrtVar] <- NULL
 
-d <- valid[,c(DepVar, TrtVar)]
-valid[,DepVar] <- NULL
-valid[,TrtVar] <- NULL
-valid <- cbind.data.frame(CrossStandardize(valid, train), d)
-
-d <- test[,c(DepVar, TrtVar)]
-test[,DepVar] <- NULL
-test[,TrtVar] <- NULL
-test <- cbind.data.frame(CrossStandardize(test, train), d)
-
-train <- Standardize(train)
-
 ### Find the best K    
-#kcurve <- findK(train, valid, subset(ClustersNIV, Rank==1)$Variable, seq(from=20, to=200, by=20), DepVar, TrtVar, "CLASS") 
+kcurve <- findK(train, valid, subset(ClustersNIV, Rank==1)$Variable, seq(from=20, to=200, by=20), DepVar, TrtVar, "CLASS") 
 
 ### Plot the results
-#ggplot(kcurve, aes_string(x="K", y="TopDecileNetLift")) + geom_line() + xlab("K") + ylab("Net Lift")
-
-### Pick a K 
-K <- 100
+ggplot(kcurve, aes_string(x="K", y="TopDecileNetLift")) + geom_line() + xlab("K") + ylab("Net Lift")
 
 ### Score the test dataset and get the net lift curve
 knn <- kknn(as.formula(paste0("CLASS ~ ", paste(subset(ClustersNIV, Rank==1)$Variable, collapse="+"))), 
@@ -107,3 +100,5 @@ scored <- within(scored, {NetScore=NA
                           NetScore[is.na(NetScore)]=0})
 scored$Decile <- GetScoreBins(scored, "NetScore", 10)      
 NetLiftCurve(scored, DepVar, TrtVar, "Decile")
+
+rm(list=ls())
