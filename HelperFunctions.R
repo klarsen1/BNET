@@ -153,7 +153,7 @@ LiftCurve <- function(data, y, by){
 }
 
 GlmnetSelect <- function(data, y, nfolds=10, family="binomial", alphas=c(0, 0.5, 1), valid){
-  registerDoMC(cores=2)
+  registerDoMC(cores=3)
   set.seed(2015)
   nfoldid=sample(rep(seq(nfolds),length=nrow(data)))
   data <- data[,sapply(data, is.numeric)]

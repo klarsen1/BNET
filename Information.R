@@ -91,7 +91,8 @@ NWOE <- function(t, x){
   t$WOE_c <- ifelse(t$y_1_c>0 & t$y_0_c>0, log((t$y_1_c*sum_y_0_c)/(t$y_0_c*sum_y_1_c)), 0) 
   t$NWOE <- t$WOE_t - t$WOE_c
   t$NIV_weight <- (t$y_1_t/sum_y_1_t)*(t$y_0_c/sum_y_0_c) - (t$y_0_t/sum_y_0_t)*(t$y_1_c/sum_y_1_c)
-  C <- 2/(sum((t$y_1_t/sum_y_1_t)*(t$y_0_c/sum_y_0_c))+sum((t$y_0_t/sum_y_0_t)*(t$y_1_c/sum_y_1_c)))
+  #C <- 2/(sum((t$y_1_t/sum_y_1_t)*(t$y_0_c/sum_y_0_c))+sum((t$y_0_t/sum_y_0_t)*(t$y_1_c/sum_y_1_c)))
+  C <- 10
   t$NIV_weight <- t$NIV_weight * C
   t$NIV_row <- t$NWOE * t$NIV_weight 
   t$NIV <- ave(t$NIV_row, FUN=cumsum)

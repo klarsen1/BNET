@@ -32,7 +32,8 @@ test <- CreateMissingDummies(test)
 NIV <- Information(train, valid, DepVar, 10, TrtVar)
 NIV$Summary
 NIV$Tables$N_OPEN_REV_ACTS
-SubsetNIV <- subset(NIV$Summary, AdjNIV>=0.02)$Variable
+NIV$Tables$TOT_HI_CRDT_CRDT_LMT
+SubsetNIV <- subset(NIV$Summary, AdjNIV>=0.085)$Variable
 train <- train[,c(DepVar, TrtVar, SubsetNIV)]
 
 ### Create a class variable for KNN
@@ -80,7 +81,7 @@ train[,DepVar] <- NULL
 train[,TrtVar] <- NULL
 
 ### Find the best K    
-kcurve <- findK(train, valid, subset(ClustersNIV, Rank==1)$Variable, seq(from=20, to=200, by=20), DepVar, TrtVar, "CLASS") 
+kcurve <- findK(train, valid, subset(ClustersNIV, Rank==1)$Variable, seq(from=60, to=200, by=20), DepVar, TrtVar, "CLASS") 
 
 ### Plot the results
 ggplot(kcurve, aes_string(x="K", y="TopDecileNetLift")) + geom_line() + xlab("K") + ylab("Net Lift")
