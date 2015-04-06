@@ -9,6 +9,7 @@ library(kknn)
 library(ClustOfVar)
 library(Matrix)
 
+# checks if a variable is binary
 is.binary <- function(x){
   unique = unique(x)
   if (!is.numeric(x) | any(is.na(x))){ 
@@ -18,6 +19,7 @@ is.binary <- function(x){
   }
 }
 
+# creates a GAM formula
 CreateGAMFormula <- function(data, y, span){
   names <- names(data[,!(names(data) %in% y)])
   if (length(names)>0){
@@ -44,6 +46,7 @@ CreateGAMFormula <- function(data, y, span){
   return(as.formula(Formula))
 }
 
+# creates dummies to indicate missing values
 CreateMissingDummies <- function(data){
   names <- names(data[,sapply(data, is.numeric)])
   for (i in 1:length(names)){    
@@ -54,6 +57,7 @@ CreateMissingDummies <- function(data){
   return(data)
 }
 
+# imputes missing values with averages
 ImputeMeans <- function(data, skip){  
   skipdf <- data[,names(data) %in% skip]
   data <- data[,!(names(data) %in% skip)]  
@@ -61,6 +65,7 @@ ImputeMeans <- function(data, skip){
   return(cbind.data.frame(data, skipdf))    
 }
 
+# imputes missing values on one dataset with means from another dataset
 CrossImputeMeans <- function(data1, data2, skip){
   # Use data1 to get means. Impute missing values in data2
   Means <- numcolwise(function(x) mean(x, na.rm=TRUE))(data2)
@@ -74,6 +79,7 @@ CrossImputeMeans <- function(data1, data2, skip){
   return(data1)  
 }
 
+# z-score standardization
 Standardize <- function(data, skip){
   skipdf <- data[,names(data) %in% skip]
   data <- data[,!(names(data) %in% skip)]
@@ -81,6 +87,7 @@ Standardize <- function(data, skip){
   return(cbind.data.frame(data, skipdf))    
 }
 
+# truncate the data at a specified quantile
 cap <- function(data, skip, p=0.99){
   skipdf <- data[,names(data) %in% skip]
   data <- data[,!(names(data) %in% skip)]  
@@ -88,6 +95,7 @@ cap <- function(data, skip, p=0.99){
   return(cbind.data.frame(data, skipdf))    
 }
 
+# truncate the data on one dataset with specified quantiles from another dataset
 CrossCap <- function(data1, data2, skip, p=0.99){
   # Use data1 to get means. Impute missing values in data2
   q <- numcolwise(function(x) quantile(x, prob=p, na.rm=TRUE))(data2)
@@ -102,6 +110,7 @@ CrossCap <- function(data1, data2, skip, p=0.99){
   return(data1)  
 }
 
+# standardize variables in one dataset with means and standard deviations from another dataset
 CrossStandardize <- function(data1, data2, skip){
   # Use data1 to get means. Impute missing values in data2
   Means <- numcolwise(function(x) mean(x, na.rm=TRUE))(data2)
@@ -117,7 +126,7 @@ CrossStandardize <- function(data1, data2, skip){
   return(data1)  
 }
 
-
+# generates a net lift curve
 NetLiftCurve <- function(data, y, trt, by=NULL){
   data$N <- 1
   data$y_1_t <- ifelse(data[,y]==1 & data[,trt]==1, 1, 0)
@@ -141,6 +150,7 @@ NetLiftCurve <- function(data, y, trt, by=NULL){
   return(output)  
 }
 
+# generates a regular lift curve
 LiftCurve <- function(data, y, by){
   data$N <- 1
   data$Group <- data[[by]]
@@ -152,6 +162,7 @@ LiftCurve <- function(data, y, by){
   return(output)  
 }
 
+# selct the alpha for the elastic net, and return the selected variables
 GlmnetSelect <- function(data, y, nfolds=10, family="binomial", alphas=c(0, 0.5, 1), valid){
   registerDoMC(cores=3)
   set.seed(2015)
@@ -192,12 +203,14 @@ GlmnetSelect <- function(data, y, nfolds=10, family="binomial", alphas=c(0, 0.5,
   return(list(BestVariables, BestAlpha, BestC, BestModel))
 }
 
+# group scores into bins
 GetScoreBins <- function(data, score, bins){
    breaks <- unique(quantile(data[[score]], probs=c(0:bins/bins)))
    b <- cut(data[[score]], breaks=breaks, labels=1:(length(breaks)-1), include.lowest=TRUE) 
    return(as.numeric(levels(b))[b]) 
 }
 
+# find the best K for a net lift KNN classifier
 findK <- function(train, valid, variables, kvalues, DepVar, TrtVar, class){
   results <- data.frame(matrix(nrow=length(kvalues), ncol=2))
   names(results) <- c("K", "TopDecileNetLift")
