@@ -92,7 +92,7 @@ names(train)[1] <- "D_SWING"
 train <- subset(train, !is.na(D_SWING))
 
 additive.model <- mgcv::gam(CreateGAMFormula(data=train, y="D_SWING", s=-1), 
-                            data=train, method="REML",
+                            data=train,
                             family=binomial(link="logit"))
 
 #plot(additive.model)

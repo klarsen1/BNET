@@ -8,6 +8,7 @@ DataLocation <- CodeLocation
 
 source(paste0(CodeLocation, "HelperFunctions.R"))
 library(Information)
+library(gam)
 source(paste0(CodeLocation, "auc.R"))
 
 DepVar <- "PURCHASE"
@@ -62,7 +63,7 @@ train <- cap(train, c(DepVar, TrtVar, ID))
 train <- train[match.fun("==")(train[[TrtVar]], 1), ]
 train <- CreateMissingDummies(train)
 train <- train[,c(Variables[[1]], DepVar)]
-treatment.model <- gam::gam(CreateGAMFormula(train, DepVar, 0.6), 
+treatment.model <- gam::gam(CreateGAMFormula(data=train, y=DepVar, s=0.6, type="gam_package"), 
                    na.action=na.gam.replace, 
                    data=train, 
                    family=binomial)
@@ -112,7 +113,7 @@ train <- cap(train, c(DepVar, TrtVar, ID))
 train <- train[match.fun("==")(train[[DepVar]], 1), ]
 train <- CreateMissingDummies(train)
 train <- train[,c(Variables[[1]], TrtVar)]
-secondary.model <- gam::gam(CreateGAMFormula(train, TrtVar, 0.6), 
+secondary.model <- gam::gam(CreateGAMFormula(data=train, y=DepVar, s=0.6, type="gam_package"), 
                             na.action=na.gam.replace, 
                             data=train, 
                             family=binomial)
