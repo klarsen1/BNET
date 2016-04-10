@@ -2,10 +2,10 @@ rm(list=ls())
 
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
 CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
+DataLocation <- CodeLocation
 source(paste0(CodeLocation, "HelperFunctions.R"))
-source(paste0(CodeLocation, "Information.R"))
+library(Information)
 source(paste0(CodeLocation, "auc.R"))
 
 DepVar <- "PURCHASE"
@@ -32,7 +32,7 @@ train <- train[match.fun("==")(train[[TrtVar]], 1), ]
 
 
 ### Screen out the weakest predictors with IV
-IV <- Information(train, valid, DepVar, 10)
+IV <- Information::create_infotables(data=train, valid=valid, y=DepVar, bins=10)
 IVSummary <- IV$Summary
 train <- train[,c(subset(IVSummary, AdjIV>0.05)$Variable, DepVar, TrtVar)]
 valid <- valid[,c(subset(IVSummary, AdjIV>0.05)$Variable, DepVar, TrtVar)]

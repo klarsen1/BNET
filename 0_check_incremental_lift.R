@@ -2,10 +2,9 @@ rm(list=ls())
 
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
 CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
+DataLocation <- CodeLocation
 source(paste0(CodeLocation, "HelperFunctions.R"))
-source(paste0(CodeLocation, "Information.R"))
 
 DepVar <- "PURCHASE"
 TrtVar <- "TREATMENT"

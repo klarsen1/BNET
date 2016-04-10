@@ -1,12 +1,16 @@
 rm(list=ls())
 
+### NOTE: Re-start R to get rid of the gam package (it interferes with mgcv). Detaching gam is not sufficient.
+
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
 CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
+DataLocation <- CodeLocation
 source(paste0(CodeLocation, "HelperFunctions.R"))
-source(paste0(CodeLocation, "Information.R"))
+library(Information)
+library(mgcv)
 source(paste0(CodeLocation, "auc.R"))
+
 
 DepVar <- "PURCHASE"
 TrtVar <- "TREATMENT"
@@ -81,17 +85,17 @@ test <- CreateMissingDummies(test)
 
 ### Deal with missing values
 test <- CrossImputeMeans(test, train, c(ID, TrtVar, DepVar))
+train <- ImputeMeans(train, c(ID, TrtVar, DepVar))
 
 train <- cbind.data.frame(scored$D_SWING, train[,Variables])
 names(train)[1] <- "D_SWING"
 train <- subset(train, !is.na(D_SWING))
 
-additive.model <- gam::gam(CreateGAMFormula(train, "D_SWING", 0.3), 
-                            na.action=na.gam.replace, 
-                            data=train, 
-                            family=binomial)
+additive.model <- mgcv::gam(CreateGAMFormula(data=train, y="D_SWING", s=-1), 
+                            data=train, method="REML",
+                            family=binomial(link="logit"))
 
-plot(additive.model)
+#plot(additive.model)
 
 test <- cbind.data.frame(test[,c(DepVar, TrtVar)], predict(additive.model, type="link", newdata=test))
 names(test) <- c(DepVar, TrtVar, "PGAM")

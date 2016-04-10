@@ -3,7 +3,7 @@ options(scipen=10)
 DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
 CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
 source(paste0(CodeLocation, "HelperFunctions.R"))
-source(paste0(CodeLocation, "Information.R"))
+library(Information)
 
 DepVar <- "PURCHASE"
 TrtVar <- "TREATMENT"
@@ -18,10 +18,12 @@ train <- train[match.fun("==")(train[[TrtVar]], 1), ]
 
 
 ### Run the WOE analysis
-WOE <- Information(train, valid, DepVar, 10)
+WOE <- Information::create_infotables(data=train, valid=valid, y=DepVar, bins=10)
 
 ### Look at some output
-WOE$Summary
+S <- WOE$Summary
 WOE$Tables$REGION
 WOE$Tables$N_OPEN_REV_ACTS
 WOE$Tables$PRCNT_OF_ACTS_NEVER_DLQNT
+
+Information::plot_infotables(WOE, subset(S, AdjIV>0.5)$Variable)

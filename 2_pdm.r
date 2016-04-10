@@ -2,10 +2,12 @@ rm(list=ls())
 
 ### Setup
 options(scipen=10)
-DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
+#DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
 CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
+DataLocation <- CodeLocation
+
 source(paste0(CodeLocation, "HelperFunctions.R"))
-source(paste0(CodeLocation, "Information.R"))
+library(Information)
 source(paste0(CodeLocation, "auc.R"))
 
 DepVar <- "PURCHASE"
@@ -32,7 +34,7 @@ valid <- valid[match.fun("==")(valid[[TrtVar]], 1), ]
 train <- train[match.fun("==")(train[[TrtVar]], 1), ]
 
 ### Screen out the weakest predictors with IV
-IV <- Information(train, valid, DepVar, 10)
+IV <- Information::create_infotables(data=train, valid=valid, y=DepVar, bins=10)
 IVSummary <- IV$Summary
 train <- train[,c(subset(IVSummary, AdjIV>0.05)$Variable, DepVar, TrtVar)]
 valid <- valid[,c(subset(IVSummary, AdjIV>0.05)$Variable, DepVar, TrtVar)]
@@ -83,7 +85,7 @@ train <- train[match.fun("==")(train[[DepVar]], 1), ]
 valid <- valid[match.fun("==")(valid[[DepVar]], 1), ]
 
 ### Screen out the weakest predictors with IV
-IV <- Information(train, valid, TrtVar, 10)
+IV <- Information::create_infotables(data=train, valid=valid, y=DepVar, bins=10)
 IVSummary <- IV$Summary
 train <- train[,c(subset(IVSummary, AdjIV>0.02)$Variable, DepVar, TrtVar)]
 valid <- valid[,c(subset(IVSummary, AdjIV>0.02)$Variable, DepVar, TrtVar)]
@@ -104,7 +106,7 @@ Variables[[1]]
 Variables[[2]]
 
 ### Fit the GAM model
-# (First re-read the data to restore missing values (to make sure that GAM fits splines to non-missinf values only)
+# (First re-read the data to restore missing values (to make sure that GAM fits splines to non-missing values only)
 train <- readRDS(TrainingData)
 train <- cap(train, c(DepVar, TrtVar, ID))
 train <- train[match.fun("==")(train[[DepVar]], 1), ]
