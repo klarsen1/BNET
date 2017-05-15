@@ -1,9 +1,18 @@
 ### Score the traning dataset with the KNN
+vv <- mutate(valid_clean,
+             CLASS=as.factor(ifelse(PURCHASE==1 & TREATMENT==1, 'A', 
+             ifelse(PURCHASE==0 & TREATMENT==1, 'B',
+             ifelse(PURCHASE==1 & TREATMENT==0, 'C',
+             ifelse(PURCHASE==0 & TREATMENT==0, 'D', NA))))))
+
+vv <- CrossStandardize(vv, train_clean, c("PURCHASE", "TREATMENT", "UNIQUE_ID", "CLASS"))
+
+
 knn <- kknn(as.formula(paste0("CLASS ~ ", paste(subset(ClustersNIV, Rank==1)$Variable, collapse="+"))), 
-            train=t, test=t, 
+            train=vv, test=t, 
             na.action = na.omit(),
             distance=2,
-            k=100, 
+            k=300, 
             kernel = "epanechnikov", 
             scale=FALSE)     
 
@@ -15,7 +24,7 @@ knnscores <- data.frame(cbind(train_clean, knn$prob)) %>%
 
 NetLiftCurve(knnscores, "PURCHASE", "TREATMENT", "Decile")
 
-table(scored$D_SWING)
+table(knnscores$D_SWING)
 
 ###################### GAM approximation
 f <- CreateGAMFormula(train_clean[,subset(ClustersNIV, Rank==1)$Variable], "D_SWING", 0.6, "regspline")

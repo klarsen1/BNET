@@ -11,5 +11,5 @@ WOE$Tables$REGION
 WOE$Tables$N_OPEN_REV_ACTS
 WOE$Tables$PRCNT_OF_ACTS_NEVER_DLQNT
 
-Information::plot_infotables(WOE, subset(S, AdjIV>0.5)$Variable)
+Information::plot_infotables(WOE, subset(S, AdjIV>0.6)$Variable)
 Information::plot_infotables(WOE, "N_OPEN_REV_ACTS")

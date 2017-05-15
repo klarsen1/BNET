@@ -216,7 +216,7 @@ GetScoreBins <- function(data, score, bins){
 
 # find the best K for a net lift KNN classifier
 findK <- function(train, valid, variables, kvalues, DepVar, TrtVar, class){
-  ncore <- detectCores()-2
+  ncore <- detectCores()-1
   registerDoParallel(ncore)
   l <- foreach(i=1:length(kvalues)) %dopar% {
     k <- kvalues[i]

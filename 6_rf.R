@@ -8,11 +8,12 @@ RF <- upliftRF(f,
                data = train_clean,
                split_method = "KL",
                minsplit = 200)
-                 
+
+summary(RF)$importance
+
 pred <- data.frame(cbind(predict(RF, test_clean), test_clean[,c("TREATMENT", "PURCHASE")])) %>%
   mutate(NetLift=pr.y1_ct1-pr.y1_ct0, 
          Decile=ntile(NetLift, 10))
 
-summary(RF)$importance
 
-NetLiftCurve(pred, DepVar, TrtVar, "Decile")
+NetLiftCurve(pred, "PURCHASE", "TREATMENT", "Decile")

@@ -16,6 +16,7 @@ t <- mutate(train_clean,
   ifelse(PURCHASE==1 & TREATMENT==0, 'C',
   ifelse(PURCHASE==0 & TREATMENT==0, 'D', NA))))))
 
+
 ### Variable clustering
 tree <- hclustvar(t[,SubsetNIV])
 nclusters <- length(tree[tree$height<0.7])
@@ -28,7 +29,8 @@ ClustersNIV <- data.frame(cbind(names(kmeans$cluster), kmeans$cluster, NIV$Summa
 names(ClustersNIV) <- c("Variable", "Cluster", "AdjNIV")
 ClustersNIV$AdjNIV <- as.numeric(ClustersNIV$AdjNIV)
 ClustersNIV <- group_by(ClustersNIV, Cluster) %>%
-  mutate(Rank=dense_rank(-AdjNIV))
+  mutate(Rank=dense_rank(-AdjNIV)) %>%
+  arrange(Cluster)
 
 
 ### Standardize the data for clustering
