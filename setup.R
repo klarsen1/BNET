@@ -10,9 +10,10 @@ library(Matrix)
 library(foreach)
 library(doParallel)
 library(uplift)
+library(gam)
 
 options(scipen=10)
-CodeLocation <- "/Users/kim.larsen/Documents/Code/BNET/"
+CodeLocation <- "/Users/thirdlovechangethisname/Documents/Code/BNET/"
 DataLocation <- CodeLocation
 source(paste0(CodeLocation, "HelperFunctions.R"))
 
@@ -31,11 +32,11 @@ valid <- CreateMissingDummies(valid)
 test <- CreateMissingDummies(test)
 
 ### Impute and cap
-test_clean <- CrossCap(test, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
-test_clean <- CrossImputeMeans(test_clean, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
+test_clean <- CrossImputeMeans(test, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
+test_clean <- CrossCap(test_clean, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
 
-valid_clean <- CrossCap(valid, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
-valid_clean <- CrossImputeMeans(valid_clean, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
+valid_clean <- CrossImputeMeans(valid, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
+valid_clean <- CrossCap(valid_clean, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
 
 train_clean <- ImputeMeans(train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
 train_clean <- CrossCap(train_clean, train, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))

@@ -1,14 +1,5 @@
-rm(list=ls())
-
 ### Setup
 options(scipen=10)
-#DataLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Data/"
-CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
-DataLocation <- CodeLocation
-
-source(paste0(CodeLocation, "HelperFunctions.R"))
-library(Information)
-library(gam)
 source(paste0(CodeLocation, "auc.R"))
 
 DepVar <- "PURCHASE"
@@ -22,7 +13,7 @@ TestData <- paste0(DataLocation, "test.rda")
 test <- readRDS(TestData)
 test <- CreateMissingDummies(test)
 
-################# Model for P(y=1 | treatment)
+################# Model for P(purchase=1 | treatment)
 valid <- readRDS(ValidationData)
 train <- readRDS(TrainingData)
 
@@ -56,7 +47,7 @@ Variables[[1]]
 Variables[[2]]
 
 ### Fit the GAM model
-# (First re-read the training data to restore missing values (to make sure that GAM fits splines to non-missinf values only)
+# (First re-read the training data to restore missing values (to make sure that GAM fits splines to non-missing values only)
 train <- readRDS(TrainingData)
 train <- cap(train, c(DepVar, TrtVar, ID))
 
@@ -71,13 +62,13 @@ treatment.model <- gam::gam(CreateGAMFormula(data=train, y=DepVar, s=0.6, type="
 summary(treatment.model)
 plot(treatment.model)
 
-P1 <- cbind.data.frame(test[,c(ID, DepVar)], predict(treatment.model, type="link", newdata=test))
+P1 <- data.frame(cbind(test[,c(ID, DepVar)], predict(treatment.model, type="link", newdata=test)))
 names(P1) <- c(ID, DepVar, "P1")
 P1$P1 <- 1/(1+exp(-P1$P1))
 AUC(P1[[DepVar]], P1$P1)[[1]]
 
 
-################# Model for P(treatment=1 | purchase)
+################# Model for P(treatment=1 | purchase=1)
 
 ### Re-read the data
 valid <- readRDS(ValidationData)
@@ -86,7 +77,7 @@ train <- train[match.fun("==")(train[[DepVar]], 1), ]
 valid <- valid[match.fun("==")(valid[[DepVar]], 1), ]
 
 ### Screen out the weakest predictors with IV
-IV <- Information::create_infotables(data=train, valid=valid, y=DepVar, bins=10)
+IV <- Information::create_infotables(data=train, valid=valid, y=TrtVar, bins=10)
 IVSummary <- IV$Summary
 train <- train[,c(subset(IVSummary, AdjIV>0.02)$Variable, DepVar, TrtVar)]
 valid <- valid[,c(subset(IVSummary, AdjIV>0.02)$Variable, DepVar, TrtVar)]
@@ -113,7 +104,7 @@ train <- cap(train, c(DepVar, TrtVar, ID))
 train <- train[match.fun("==")(train[[DepVar]], 1), ]
 train <- CreateMissingDummies(train)
 train <- train[,c(Variables[[1]], TrtVar)]
-secondary.model <- gam::gam(CreateGAMFormula(data=train, y=DepVar, s=0.6, type="gam_package"), 
+secondary.model <- gam::gam(CreateGAMFormula(data=train, y=TrtVar, s=0.6, type="gam_package"), 
                             na.action=na.gam.replace, 
                             data=train, 
                             family=binomial)
@@ -128,10 +119,8 @@ P2$P2 <- 1/(1+exp(-P2$P2))
 
 ################# Calculate the combined model and get the lift
 
-Combined <- join(P1, P2, by=ID)
+Combined <- dplyr::inner_join(P1, P2, by=ID)
 Combined$NetScore <- Combined$P1*(2-1/Combined$P2)
 Combined$Decile <- GetScoreBins(Combined, "NetScore", 10) 
   
 NetLiftCurve(Combined, DepVar, TrtVar, "Decile")
-
-rm(list=ls())

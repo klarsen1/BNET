@@ -101,13 +101,14 @@ cap <- function(data, skip, p=0.99){
 
 # truncate the data on one dataset with specified quantiles from another dataset
 CrossCap <- function(data1, data2, skip, p=0.99){
-  # Use data1 to get means. Impute missing values in data2
+  # Use data1 to get p99s. Cap vaues in data2
   q <- plyr::numcolwise(function(x) quantile(x, prob=p, na.rm=TRUE))(data2)
   q <- q[,!(names(q) %in% skip)]
   names <- names(q)
   for (i in 1:length(names)){
     if (names[i] %in% names(data1)){
-      l <- as.numeric(as.character(q[i]))
+      l <- as.numeric(q[1,i])
+      #print(l)
       data1[,names[i]] <- ifelse(data1[,names[i]]>l, l, data1[,names[i]])
     }
   }
