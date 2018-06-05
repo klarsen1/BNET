@@ -41,7 +41,7 @@ t <- Standardize(t, c("PURCHASE", "TREATMENT", "UNIQUE_ID"))
 t <- t[,c(subset(ClustersNIV, Rank==1)$Variable, "CLASS")]
 
 ### Find the best K    
-kcurve <- findK(t, v, filter(ClustersNIV, Rank==1)$Variable, seq(from=100, to=500, by=50), "PURCHASE", "TREATMENT", "CLASS") 
+kcurve <- findK(t, v, filter(ClustersNIV, Rank==1)$Variable, seq(from=100, to=500, by=100), "PURCHASE", "TREATMENT", "CLASS") 
 
 ### Plot the results
 ggplot(kcurve, aes_string(x="K", y="TopDecileNetLift")) + geom_line() + xlab("K") + ylab("Net Lift")

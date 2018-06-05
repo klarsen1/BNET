@@ -11,6 +11,7 @@ library(foreach)
 library(doParallel)
 library(uplift)
 library(gam)
+library(mgcv)
 
 options(scipen=10)
 CodeLocation <- "/Users/thirdlovechangethisname/Documents/Code/BNET/"

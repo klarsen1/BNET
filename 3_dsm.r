@@ -1,12 +1,6 @@
-rm(list=ls())
 
 ### Setup
 options(scipen=10)
-CodeLocation <- "/Users/kimlarsen/Google Drive/BNET3.0/Code/BNET/"
-DataLocation <- CodeLocation
-source(paste0(CodeLocation, "HelperFunctions.R"))
-library(Information)
-library(gam)
 source(paste0(CodeLocation, "auc.R"))
 
 DepVar <- "PURCHASE"
@@ -21,7 +15,7 @@ test <- readRDS(TestData)
 test <- CreateMissingDummies(test)
 
 
-################# Model for P(y=1 | treatment)
+################# Model for P(purchase=1 | treatment=1)
 valid <- readRDS(ValidationData)
 train <- readRDS(TrainingData)
 
@@ -55,7 +49,7 @@ Variables[[1]]
 Variables[[2]]
 
 ### Fit the GAM model
-# (First re-read the training data to restore missing values (to make sure that GAM fits splines to non-missinf values only)
+# (First re-read the training data to restore missing values to make sure that GAM fits splines to non-missing values only)
 train <- readRDS(TrainingData)
 train <- cap(train, c(DepVar, TrtVar, ID))
 
@@ -76,7 +70,7 @@ P1$P1 <- 1/(1+exp(-P1$P1))
 AUC(P1[[DepVar]], P1$P1)[[1]]
 
 
-################# Model for P(purhase | control)
+################# Model for P(purhase=1 | control=1)
 
 ### Re-read the data
 train <- readRDS(TrainingData)
@@ -104,10 +98,9 @@ P2$P2 <- 1/(1+exp(-P2$P2))
 
 ################# Calculate the combined model and get the lift
 
-Combined <- join(P1, P2, by=ID)
+Combined <- dplyr::inner_join(P1, P2, by=ID)
 Combined$NetScore <- Combined$P1 - Combined$P2
 Combined$Decile <- GetScoreBins(Combined, "NetScore", 10) 
   
 NetLiftCurve(Combined, DepVar, TrtVar, "Decile")
 
-rm(list=ls())
